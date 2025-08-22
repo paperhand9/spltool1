@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Mainnet SPL Token Creator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #9945FF;
+            --secondary: #14F195;
+            --dark: #141E30;
+            --darker: #0d1b2a;
+            --light: #e0e1dd;
+            --gray: #3A506B;
+            --success: #38c172;
+            --error: #e53e3e;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+       
+        body {
+            background: linear-gradient(135deg, var(--dark), #243B55);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+       
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(20, 30, 48, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            margin-top: 20px;
+            border: 1px solid var(--gray);
+        }
+       
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray);
+        }
+       
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+       
+        .description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--light);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+       
+        .info-banner {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+       
+        .info-banner i {
+            font-size: 2rem;
+        }
+       
+        .card {
+            background: rgba(36, 59, 85, 0.8);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid var(--secondary);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+       
+        .card-title {
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--secondary);
+        }
+       
+        .card-title i {
+            font-size: 1.8rem;
+        }
+       
+        .form-group {
+            margin-bottom: 20px;
+        }
+       
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--light);
+        }
+       
+        input, select, textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--gray);
+            border-radius: 8px;
+            background: rgba(58, 80, 107, 0.3);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+       
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(153, 69, 255, 0.3);
+        }
+       
+        input::placeholder, textarea::placeholder {
+            color: rgba(224, 225, 221, 0.6);
+        }
+       
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+       
+        button {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: var(--darker);
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+       
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(153, 69, 255, 0.4);
+        }
+       
+        button:active {
+            transform: translateY(0);
+        }
+       
+        .button-connected {
+            background: linear-gradient(90deg, #4cc9f0, #4895ef);
+        }
+       
+        .button-create {
+            background: linear-gradient(90deg, var(--primary), #8750f7);
+        }
+       
+        .status {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(36, 59, 85, 0.8);
+            text-align: center;
+            font-weight: 500;
+            border-left: 5px solid var(--gray);
+        }
+       
+        .status.success {
+            background: rgba(56, 193, 114, 0.2);
+            border-left: 5px solid var(--success);
+        }
+       
+        .status.error {
+            background: rgba(229, 62, 62, 0.2);
+            border-left: 5px solid var(--error);
+        }
+       
+        .wallet-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray);
+        }
+       
+        .wallet-address {
+            font-family: monospace;
+            background: rgba(58, 80, 107, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border: 1px solid var(--secondary);
+        }
+       
+        .flex-group {
+            display: flex;
+            gap: 20px;
+        }
+       
+        .flex-group > * {
+            flex: 1;
+        }
+       
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            text-align: center;
+            color: var(--primary);
+            text-shadow: 0 2px 10px rgba(153, 69, 255, 0.5);
+        }
+       
+        .steps {
+            margin-top: 35px;
+        }
+       
+        .step {
+            display: flex;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+       
+        .step-number {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+       
+        .step-content {
+            flex: 1;
+        }
+       
+        .step-content h3 {
+            margin-bottom: 8px;
+            color: var(--secondary);
+        }
+       
+        .network-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 15px;
+        }
+       
+        .transaction-details {
+            background: rgba(36, 59, 85, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid var(--secondary);
+        }
+       
+        .transaction-details h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+       
+        .detail-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+       
+        .detail-label {
+            font-weight: 600;
+            width: 150px;
+            color: var(--light);
+        }
+       
+        .detail-value {
+            flex: 1;
+            font-family: monospace;
+            word-break: break-all;
+        }
+       
+        .toggle-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+       
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(58, 80, 107, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--secondary);
+            width: 100%;
+            justify-content: space-between;
+        }
+       
+        .toggle-item label {
+            margin-bottom: 0;
+            flex: 1;
+        }
+       
+        .yes-no-toggle {
+            display: flex;
+            gap: 10px;
+        }
+       
+        .yes-no-toggle button {
+            width: auto;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            background: rgba(58, 80, 107, 0.5);
+            border: 1px solid var(--secondary);
+            margin-top: 0;
+        }
+       
+        .yes-no-toggle button.active {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-color: var(--primary);
+        }
+       
+        .property-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+       
+        .section-title {
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+            color: var(--secondary);
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray);
+        }
+       
+        @media (max-width: 768px) {
+            .flex-group {
+                flex-direction: column;
+            }
+           
+            .container {
+                padding: 20px;
+            }
+           
+            .wallet-info {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+           
+            .detail-row {
+                flex-direction: column;
+                margin-bottom: 15px;
+            }
+           
+            .detail-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+           
+            .toggle-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+           
+            .toggle-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+           
+            .yes-no-toggle {
+                width: 100%;
+                justify-content: space-between;
+            }
+           
+            .yes-no-toggle button {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo"><i class="fas fa-coins"></i></div>
+   
+    <div class="header">
+        <h1>Solana Mainnet SPL Token Creator</h1>
+        <p class="description">Create and deploy custom tokens on the Solana Mainnet with advanced options like revoking minting, freezing, and update authority.</p>
+    </div>
+   
+    <div class="container">
+        <div class="info-banner">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <strong>Mainnet Information:</strong> You are interacting with the Solana Mainnet.
+                Transactions will require real SOL tokens for gas fees and will create real assets on the blockchain.
+            </div>
+        </div>
+       
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-wallet"></i> Wallet Connection <span class="network-indicator">MAINNET</span></h2>
+            <div class="form-group">
+                <button id="connectButton">Connect Wallet</button>
+            </div>
+            <div class="wallet-info" id="walletInfo" style="display: none;">
+                <span>Connected Wallet:</span>
+                <span class="wallet-address" id="walletAddress"></span>
+            </div>
+        </div>
+       
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-cog"></i> Token Configuration</h2>
+            <div class="form-group">
+                <label for="tokenName">Token Name</label>
+                <input type="text" id="tokenName" placeholder="e.g., My Awesome Token">
+            </div>
+            <div class="form-group">
+                <label for="tokenSymbol">Token Symbol</label>
+                <input type="text" id="tokenSymbol" placeholder="e.g., MAT" maxlength="10">
+            </div>
+            <div class="flex-group">
+                <div class="form-group">
+                    <label for="tokenSupply">Initial Supply</label>
+                    <input type="number" id="tokenSupply" placeholder="e.g., 1000000" value="1000000" min="1">
+                </div>
+                <div class="form-group">
+                    <label for="tokenDecimals">Decimals</label>
+                    <input type="number" id="tokenDecimals" placeholder="e.g., 9" value="9" min="0" max="18">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="tokenDescription">Description</label>
+                <textarea id="tokenDescription" placeholder="Describe your token's purpose and utility"></textarea>
+            </div>
+            <div class="flex-group">
+                <div class="form-group">
+                    <label for="tokenIcon">Icon URL</label>
+                    <input type="text" id="tokenIcon" placeholder="https://example.com/icon.png">
+                </div>
+                <div class="form-group">
+                    <label for="tokenWebsite">Website URL</label>
+                    <input type="text" id="tokenWebsite" placeholder="https://my-token.com">
+                </div>
+            </div>
+            <div class="flex-group">
+                <div class="form-group">
+                    <label for="tokenTwitter">Twitter URL</label>
+                    <input type="text" id="tokenTwitter" placeholder="https://twitter.com/mytoken">
+                </div>
+                <div class="form-group">
+                    <label for="tokenTelegram">Telegram URL</label>
+                    <input type="text" id="tokenTelegram" placeholder="https://t.me/mytoken">
+                </div>
+            </div>
+           
+            <h3 class="section-title">Token Properties <span class="property-badge">Transferable & Burnable by default</span></h3>
+            <div class="toggle-container">
+                <div class="toggle-item">
+                    <label for="revokeMinting">Revoke Minting Authority</label>
+                    <div class="yes-no-toggle">
+                        <button type="button" data-option="revokeMinting" data-value="no" class="active">No</button>
+                        <button type="button" data-option="revokeMinting" data-value="yes">Yes</button>
+                    </div>
+                </div>
+                <div class="toggle-item">
+                    <label for="revokeFreezing">Revoke Freezing Authority</label>
+                    <div class="yes-no-toggle">
+                        <button type="button" data-option="revokeFreezing" data-value="no" class="active">No</button>
+                        <button type="button" data-option="revokeFreezing" data-value="yes">Yes</button>
+                    </div>
+                </div>
+                <div class="toggle-item">
+                    <label for="revokeUpdate">Revoke Update Authority</label>
+                    <div class="yes-no-toggle">
+                        <button type="button" data-option="revokeUpdate" data-value="no" class="active">No</button>
+                        <button type="button" data-option="revokeUpdate" data-value="yes">Yes</button>
+                    </div>
+                </div>
+            </div>
+           
+            <button id="createButton" class="button-create">Create Token on Mainnet</button>
+        </div>
+       
+        <div class="status" id="statusMessage">
+            <i class="fas fa-info-circle"></i> Connect your wallet and configure your token to deploy on Solana Mainnet.
+        </div>
+       
+        <div class="transaction-details" id="transactionDetails" style="display: none;">
+            <h3><i class="fas fa-receipt"></i> Transaction Details</h3>
+            <div class="detail-row">
+                <span class="detail-label">Transaction ID:</span>
+                <span class="detail-value" id="txId"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Token Address:</span>
+                <span class="detail-value" id="tokenAddress"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Gas Used:</span>
+                <span class="detail-value" id="gasUsed"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value" id="txStatus"></span>
+            </div>
+        </div>
+       
+        <div class="steps">
+            <h2 class="card-title"><i class="fas fa-list-ol"></i> Implementation Guide</h2>
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Install Required Libraries</h3>
+                    <p>You need both <code>@solana/web3.js</code> and <code>@solana/spl-token</code> to create SPL tokens.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Connect to Mainnet</h3>
+                    <p>Use <code>web3.Connection</code> with the mainnet-beta cluster API URL.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Create Mint Account</h3>
+                    <p>Use <code>splToken.createMint()</code> to create the token mint account.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3>Set Token Properties</h3>
+                    <p>Use functions like <code>splToken.setAuthority()</code> to revoke minting, freezing, or update authorities.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h3>Create Token Account</h3>
+                    <p>Use <code>splToken.createAssociatedTokenAccount()</code> to create token accounts.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">6</div>
+                <div class="step-content">
+                    <h3>Mint Initial Supply</h3>
+                    <p>Use <code>splToken.mintTo()</code> to mint the initial token supply.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Solana Web3 and SPL Token libraries -->
+    <script src="https://unpkg.com/@solana/web3.js@1.70.1/lib/index.iife.js"></script>
+    <script src="https://unpkg.com/@solana/spl-token@0.3.8/lib/index.iife.js"></script>
+    <script>
+        // Global variables
+        let provider = null;
+        let connection = null;
+        let wallet = null;
+        let tokenOptions = {
+            revokeMinting: "no",
+            revokeFreezing: "no",
+            revokeUpdate: "no"
+        };
+
+        // Initialize connection to Solana Mainnet
+        function initSolana() {
+            // Connect to Solana Mainnet
+            connection = new solanaWeb3.Connection(
+                solanaWeb3.clusterApiUrl('mainnet-beta'),
+                'confirmed'
+            );
+            
+            // Check if Phantom is installed
+            if ('solana' in window) {
+                provider = window.solana;
+                
+                // Check if user is already connected
+                if (provider.isConnected) {
+                    handleConnectedWallet(provider);
+                }
+                
+                // Listen for account changes
+                provider.on('accountChanged', () => {
+                    if (provider.publicKey) {
+                        handleConnectedWallet(provider);
+                    } else {
+                        handleDisconnectedWallet();
+                    }
+                });
+            } else {
+                document.getElementById('statusMessage').innerHTML = 
+                    '<i class="fas fa-exclamation-circle"></i> Phantom wallet not found. Please install Phantom.';
+                document.getElementById('statusMessage').classList.add('error');
+            }
+        }
+
+        // Handle wallet connection
+        async function connectWallet() {
+            try {
+                if (!provider) {
+                    document.getElementById('statusMessage').innerHTML = 
+                        '<i class="fas fa-exclamation-circle"></i> Phantom wallet not found. Please install Phantom.';
+                    document.getElementById('statusMessage').classList.add('error');
+                    return;
+                }
+                
+                // Request connection to wallet
+                await provider.connect();
+                handleConnectedWallet(provider);
+                
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
+                document.getElementById('statusMessage').innerHTML = 
+                    '<i class="fas fa-exclamation-circle"></i> Error connecting wallet: ' + error.message;
+                document.getElementById('statusMessage').classList.add('error');
+            }
+        }
+
+        // Handle connected wallet
+        function handleConnectedWallet(provider) {
+            wallet = provider;
+            const walletAddress = provider.publicKey.toString();
+            const shortAddress = walletAddress.substring(0, 4) + '...' + walletAddress.substring(walletAddress.length - 4);
+            
+            document.getElementById('walletAddress').textContent = shortAddress;
+            document.getElementById('walletInfo').style.display = 'flex';
+            document.getElementById('connectButton').textContent = 'Wallet Connected';
+            document.getElementById('connectButton').classList.add('button-connected');
+            
+            document.getElementById('statusMessage').innerHTML = 
+                '<i class="fas fa-check-circle"></i> Wallet connected successfully. You can now configure your token.';
+            document.getElementById('statusMessage').classList.add('success');
+        }
+
+        // Handle wallet disconnection
+        function handleDisconnectedWallet() {
+            wallet = null;
+            document.getElementById('walletInfo').style.display = 'none';
+            document.getElementById('connectButton').textContent = 'Connect Wallet';
+            document.getElementById('connectButton').classList.remove('button-connected');
+            
+            document.getElementById('statusMessage').innerHTML = 
+                '<i class="fas fa-info-circle"></i> Wallet disconnected. Please connect your wallet to continue.';
+            document.getElementById('statusMessage').classList.remove('success');
+        }
+
+        // Create token on Mainnet
+        async function createToken() {
+            if (!wallet || !wallet.publicKey) {
+                document.getElementById('statusMessage').innerHTML = 
+                    '<i class="fas fa-exclamation-circle"></i> Please connect your wallet first.';
+                document.getElementById('statusMessage').classList.add('error');
+                return;
+            }
+            
+            const tokenName = document.getElementById('tokenName').value;
+            const tokenSymbol = document.getElementById('tokenSymbol').value;
+            const tokenSupply = document.getElementById('tokenSupply').value;
+            const tokenDecimals = document.getElementById('tokenDecimals').value;
+            
+            if (!tokenName || !tokenSymbol || !tokenSupply || !tokenDecimals) {
+                document.getElementById('statusMessage').innerHTML = 
+                    '<i class="fas fa-exclamation-circle"></i> Please fill in all required fields.';
+                document.getElementById('statusMessage').classList.add('error');
+                return;
+            }
+            
+            try {
+                document.getElementById('statusMessage').innerHTML = 
+                    '<i class="fas fa-spinner fa-spin"></i> Preparing transaction...';
+                document.getElementById('statusMessage').classList.remove('error');
+                
+                // In a real implementation, you would use:
+                // const mint = await createMint(...);
+                // const tokenAccount = await createAssociatedTokenAccount(...);
+                // await mintTo(...);
+                
+                // For demonstration, we'll simulate the process
+                await simulateTokenCreation();
+                
+            } catch (error) {
+                console.error('Error creating token:', error);
+                document.getElementById('statusMessage').innerHTML = 
+                    '<i class="fas fa-exclamation-circle"></i> Error creating token: ' + error.message;
+                document.getElementById('statusMessage').classList.add('error');
+            }
+        }
+
+        // Simulate token creation (for demonstration)
+        async function simulateTokenCreation() {
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Generate mock data
+            const mockTxId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            const mockTokenAddress = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            
+            // Display transaction details
+            document.getElementById('txId').textContent = mockTxId;
+            document.getElementById('tokenAddress').textContent = mockTokenAddress;
+            document.getElementById('gasUsed').textContent = '0.05 SOL';
+            document.getElementById('txStatus').textContent = 'Confirmed';
+            document.getElementById('transactionDetails').style.display = 'block';
+            
+            // Show success message with options used
+            let optionsText = '';
+            if (tokenOptions.revokeMinting === 'yes') optionsText += 'Minting revoked, ';
+            if (tokenOptions.revokeFreezing === 'yes') optionsText += 'Freezing revoked, ';
+            if (tokenOptions.revokeUpdate === 'yes') optionsText += 'Update authority revoked';
+            
+            if (optionsText === '') optionsText = 'Default properties applied';
+            else optionsText = optionsText.replace(/, $/, '');
+            
+            document.getElementById('statusMessage').innerHTML = 
+                `<i class="fas fa-check-circle"></i> Token created successfully! ${optionsText}`;
+            document.getElementById('statusMessage').classList.add('success');
+        }
+
+        // Yes/No toggle functionality
+        function setupToggles() {
+            document.querySelectorAll('.yes-no-toggle button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const parent = this.parentElement;
+                    const option = this.getAttribute('data-option');
+                    const value = this.getAttribute('data-value');
+                    
+                    // Update token options
+                    tokenOptions[option] = value;
+                    
+                    // Remove active class from all buttons in this toggle group
+                    parent.querySelectorAll('button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            initSolana();
+            setupToggles();
+            
+            // Add event listeners
+            document.getElementById('connectButton').addEventListener('click', connectWallet);
+            document.getElementById('createButton').addEventListener('click', createToken);
+        });
+
+        // These functions would be implemented using the SPL Token library
+        // For a real implementation, you would use:
+        async function createMint(connection, payer, mintAuthority, freezeAuthority, decimals) {
+            // This would create a new token mint on the Solana blockchain
+            // return await splToken.createMint(connection, payer, mintAuthority, freezeAuthority, decimals);
+        }
+
+        async function createAssociatedTokenAccount(connection, payer, mint, owner) {
+            // This would create an associated token account
+            // return await splToken.createAssociatedTokenAccount(connection, payer, mint, owner);
+        }
+
+        async function mintTo(connection, payer, mint, destination, authority, amount) {
+            // This would mint tokens to the specified account
+            // return await splToken.mintTo(connection, payer, mint, destination, authority, amount);
+        }
+
+        async function revokeMintAuthority(connection, payer, mint, currentAuthority) {
+            // This would revoke the mint authority
+            // return await splToken.setAuthority(connection, payer, mint, currentAuthority, splToken.AuthorityType.MintTokens, null);
+        }
+
+        async function revokeFreezeAuthority(connection, payer, mint, currentAuthority) {
+            // This would revoke the freeze authority
+            // return await splToken.setAuthority(connection, payer, mint, currentAuthority, splToken.AuthorityType.FreezeAccount, null);
+        }
+    </script>
+</body>
+</html>
